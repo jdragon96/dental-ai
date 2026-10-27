@@ -1,0 +1,4 @@
+# 이미지에는 entrypoint만 COPY한다 (소스·데이터는 compose가 프로젝트 루트를 /app에 마운트).
+# data/(수십 GB)가 빌드 컨텍스트로 전송되지 않도록 나머지는 전부 제외한다.
+*
+!docker/entrypoint.sh

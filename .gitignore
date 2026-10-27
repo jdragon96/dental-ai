@@ -1,0 +1,65 @@
+# ── dental-ai 저장소에 넣지 않는 것 ─────────────────────────────
+# 외부 저장소: 각자 .git을 가진 별도 repo라 여기 add하면 gitlink(빈 폴더)로 꼬인다.
+
+
+# 데이터 (수십 GB, 임상 데이터 포함) — 루트 기준으로만 막는다.
+# 앞에 /를 안 붙이면 dental_ai/src/dental_ai/data/ 같은 패키지까지 같이 무시된다.
+/data/
+
+# 3D 스캔 · 압축 파일: 환자 데이터가 data/ 밖으로 새어 나와도 커밋되지 않게 막는다.
+# 테스트용 작은 샘플이 꼭 필요하면 아래처럼 예외를 단다:  !tests/fixtures/*.ply
+*.stl
+*.ply
+*.obj
+*.off
+*.7z
+*.zip
+*.tar
+*.tar.gz
+
+# ── 학습 산출물 ─────────────────────────────────────────────────
+/checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+lightning_logs/
+wandb/
+mlruns/
+runs/
+outputs/
+Pointcept/
+dilated_tooth_seg_net/
+segmentation3d/
+
+# ── Python 캐시 · 빌드 ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# 가상환경 · 비밀값
+.venv/
+venv/
+.env
+
+# ── 에디터 · OS ─────────────────────────────────────────────────
+# .vscode/settings.json에 PC마다 다른 절대 경로가 들어 있다.
+.vscode/
+.idea/
+.claude/settings.local.json
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

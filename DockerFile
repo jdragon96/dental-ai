@@ -1,0 +1,43 @@
+# segmentation3d 실행 환경 (torch + CUDA 12.8 — RTX 50xx(Blackwell)는 cu128 이상이 필요하다)
+#
+#   docker compose up -d --build                  # 백그라운드로 띄움 (sshd, 호스트 포트 2222)
+#   ssh -p 2222 root@<이 PC 주소>                  # 공개키는 docker/authorized_keys
+#   docker compose exec hdl-app bash              # 이 PC에서는 SSH 없이 바로
+#
+# 소스·데이터·체크포인트는 이미지에 넣지 않는다. compose가 프로젝트 루트를 /app에 마운트한다.
+# CUDA 런타임은 torch 휠에 들어 있으므로 nvidia/cuda 베이스 이미지가 필요 없다 (드라이버는 호스트 것을 쓴다).
+FROM python:3.12-slim-bookworm
+
+ARG TORCH_VERSION=2.11.0
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu128
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    MPLBACKEND=Agg \
+    PYTHONPATH=/app/segmentation3d
+
+RUN pip install "torch==${TORCH_VERSION}" --index-url "${TORCH_INDEX_URL}"
+RUN pip install numpy scipy matplotlib pytest
+
+# SSH 접속(공개키만, 비밀번호 불가) + tmux(접속이 끊겨도 학습이 계속 돌게)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssh-server tmux \
+ && rm -rf /var/lib/apt/lists/* /etc/ssh/ssh_host_* \
+ && mkdir -p /etc/ssh/host_keys /run/sshd \
+ && printf '%s\n' \
+      'PermitRootLogin prohibit-password' \
+      'PasswordAuthentication no' \
+      'KbdInteractiveAuthentication no' \
+      'HostKey /etc/ssh/host_keys/ssh_host_ed25519_key' \
+      > /etc/ssh/sshd_config.d/seg3d.conf \
+ && echo 'case $- in *i*) cd /app/segmentation3d ;; esac' > /etc/profile.d/seg3d.sh
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
+
+WORKDIR /app/segmentation3d
+EXPOSE 22
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/usr/sbin/sshd", "-D", "-e"]

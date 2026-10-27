@@ -1,0 +1,38 @@
+services:
+  hdl-app:
+    build:
+      context: .
+      dockerfile: DockerFile
+    image: hdl-gpu:latest
+
+    shm_size: 8g
+    init: true                    # tmux 등 떨어져 나간 프로세스 정리
+    restart: unless-stopped       # Docker Desktop이 다시 켜지면 sshd도 다시 뜬다
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      TF_CPP_MIN_LOG_LEVEL: 2
+
+    ports:
+      - "2222:22"                 # ssh -p 2222 root@<이 PC 주소>
+
+    volumes:
+      - .:/app
+      - ssh-host-keys:/etc/ssh/host_keys
+
+    working_dir: /app/segmentation3d
+
+    tty: true
+    stdin_open: true
+
+volumes:
+  ssh-host-keys:
